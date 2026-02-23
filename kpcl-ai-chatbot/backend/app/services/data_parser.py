@@ -4,11 +4,29 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-def execute_agent_code(python_code: str) -> dict:
-    logger.info(f"📂 Loading data from: {settings.ACTIVE_DATA_PATH}")
+# 🚀 GLOBAL CACHE: Load the dataset once into RAM so we don't read the hard drive every time
+global_df = None
 
-    try:
+def get_dataframe():
+    global global_df
+    if global_df is None:
+        logger.info(f"📂 Loading Excel data into memory cache for the first time...")
         df = pd.read_excel(settings.ACTIVE_DATA_PATH)
+        
+        # 🛡️ THE BULLETPROOF SHIELD: Force these columns to be numeric.
+        # errors='coerce' turns any text into safe NaN values that Pandas will ignore during math.
+        numeric_cols = ['RunHrs.', 'RPM', 'Period DD to DC in months', 'FSR No']
+        for col in numeric_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+                
+        global_df = df
+    return global_df
+
+def execute_agent_code(python_code: str) -> dict:
+    try:
+        # ⚡ Instant load from RAM instead of reading the .xlsx file again
+        df = get_dataframe() 
     except Exception as e:
         return {"error": f"Failed to load Excel: {str(e)}"}
 

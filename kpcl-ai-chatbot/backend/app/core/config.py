@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
     # 🔴 UPDATE THIS LINE to point to your new file:
-    ACTIVE_DATA_PATH: str = os.path.join(BASE_DIR, "data", "raw", "cleaned_data_ready_for_ai.xlsx")
+    ACTIVE_DATA_PATH: str = os.path.join(BASE_DIR, "data", "raw", "Warranty Claims Cleaned MasterDataset.xlsx")
     
     # CORS
     BACKEND_CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:3000"]
