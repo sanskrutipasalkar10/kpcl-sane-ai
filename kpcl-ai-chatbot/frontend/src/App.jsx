@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Send, MoreHorizontal, Power } from 'lucide-react';
+import { ChevronLeft, Send, Power } from 'lucide-react';
 import Plot from 'react-plotly.js'; // <-- NEW IMPORT FOR INTERACTIVE GRAPHS
 
 function App() {
@@ -17,6 +17,20 @@ function App() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // 🧹 Function to clear the chat history (Power Button)
+  const handleClearChat = () => {
+    if (window.confirm("Are you sure you want to clear the chat history?")) {
+      setMessages([
+        {
+          role: 'bot',
+          text: 'Session cleared. Welcome back! How can I assist you today?',
+          time: getCurrentTime()
+        }
+      ]);
+      setInput(''); // Clear input box too
+    }
+  };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -151,8 +165,12 @@ function App() {
           
           {/* Quick Menu Icons */}
           <div className="flex justify-end px-4 pt-3 gap-3 text-gray-400">
-             <MoreHorizontal size={20} className="cursor-pointer hover:text-gray-600 transition-colors" />
-             <Power size={20} className="cursor-pointer text-orange-400 hover:text-orange-500 transition-colors" />
+             <Power 
+                size={20} 
+                onClick={handleClearChat} 
+                title="Restart Session"
+                className="cursor-pointer text-orange-400 hover:text-red-500 transition-colors" 
+             />
           </div>
 
           <div className="p-4 flex items-center bg-white gap-2">
