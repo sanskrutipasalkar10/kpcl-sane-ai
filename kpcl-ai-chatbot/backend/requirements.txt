@@ -1,10 +1,21 @@
+# Web Framework & Server
 fastapi==0.110.0
 uvicorn==0.27.1
 pydantic==2.6.3
 pydantic-settings==2.2.1
+python-multipart==0.0.9
+
+# Environment Variables (CRITICAL for your config.py to read .env files)
+python-dotenv==1.0.1
+
+# Data Processing
 pandas==2.2.1
 openpyxl==3.1.2
+
+# Visualization
 matplotlib==3.8.3
+plotly==5.20.0
+
+# AI & LLM Tools
 langchain==0.1.12
 langchain-community==0.0.28
-python-multipart==0.0.9
