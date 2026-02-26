@@ -55,8 +55,10 @@ function App() {
     setIsLoading(true);
 
     try {
-      // Pointing to your FastAPI backend
-      const response = await fetch('http://127.0.0.1:8000/api/v1/chat', {
+      // 🚀 DYNAMIC API URL: Uses Railway URL if deployed, or local server if testing on your PC
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+      
+      const response = await fetch(`${API_BASE_URL}/api/v1/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: textToSend, user_id: "admin" })

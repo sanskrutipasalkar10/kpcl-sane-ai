@@ -4,13 +4,7 @@ __pycache__/
 *$py.class
 venv/
 .env
-
-# Data Files - SECURITY RISK
-*.xlsx
-*.csv
-*.json
-backend/data/
-Warranty*.xlsx
+.venv/
 
 # Node / Frontend
 node_modules/
