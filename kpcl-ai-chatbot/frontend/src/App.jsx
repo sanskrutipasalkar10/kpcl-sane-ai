@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Send, Power } from 'lucide-react';
-import Plot from 'react-plotly.js'; // <-- NEW IMPORT FOR INTERACTIVE GRAPHS
+import Plot from 'react-plotly.js';
+import ReactMarkdown from 'react-markdown'; 
+import remarkGfm from 'remark-gfm'; 
 
 function App() {
   // Helper to get current time in 10:39 AM format
@@ -8,36 +10,48 @@ function App() {
     return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
-  const [messages, setMessages] = useState([
-    {
-      role: 'bot',
-      text: 'Welcome to Kirloskar Pneumatic Company Limited! How can I assist you today?',
-      time: getCurrentTime()
-    }
-  ]);
+  // 🚀 Initial message with YOUR newly requested predefined options
+  const initialBotMessage = {
+    role: 'bot',
+    text: 'Welcome to Kirloskar Pneumatic Company Limited! How can I assist you today?\n\nPlease choose from the following options or type your own question:',
+    options: [
+      "Plot a horizontal bar chart of the top 10 'Dealer Name' by average 'RunHrs'",
+      "Plot a line chart showing the total number of complaints logged per year",
+      "How many unique Compressor 'Model' types do we have?",
+      "Which 'Dealer Name' has the highest number of logged complaints?",
+      "How many rows mention the word 'leak' or 'vibration' in the 'Nature of complaint' column?",
+      "What is the most frequently mentioned item in the 'Spares / Part Replaced' column?"
+    ],
+    time: getCurrentTime()
+  };
+
+  const [messages, setMessages] = useState([initialBotMessage]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // 🧹 Function to clear the chat history (Power Button)
   const handleClearChat = () => {
     if (window.confirm("Are you sure you want to clear the chat history?")) {
-      setMessages([
-        {
-          role: 'bot',
-          text: 'Session cleared. Welcome back! How can I assist you today?',
-          time: getCurrentTime()
-        }
-      ]);
+      setMessages([{ ...initialBotMessage, time: getCurrentTime() }]);
       setInput(''); // Clear input box too
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  // 🚀 sendMessage now accepts 'overrideText' from the buttons
+  const sendMessage = async (overrideText = null) => {
+    // Use the button text if provided, otherwise use the typed input
+    const textToSend = typeof overrideText === 'string' ? overrideText : input;
     
-    const userMessage = { role: 'user', text: input, time: getCurrentTime() };
+    if (!textToSend.trim()) return;
+    
+    const userMessage = { role: 'user', text: textToSend, time: getCurrentTime() };
     setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    
+    // Only clear the input box if the user typed it manually
+    if (typeof overrideText !== 'string') {
+      setInput('');
+    }
+    
     setIsLoading(true);
 
     try {
@@ -45,7 +59,7 @@ function App() {
       const response = await fetch('http://127.0.0.1:8000/api/v1/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage.text, user_id: "admin" })
+        body: JSON.stringify({ message: textToSend, user_id: "admin" })
       });
       
       const data = await response.json();
@@ -53,7 +67,7 @@ function App() {
       setMessages(prev => [...prev, {
         role: 'bot',
         text: data.answer,
-        graph_json: data.graph_json, // <-- MAP THE JSON INSTEAD OF BASE64
+        graph_json: data.graph_json, 
         time: getCurrentTime()
       }]);
     } catch (error) {
@@ -63,11 +77,14 @@ function App() {
     }
   };
 
+  // Helper to ensure hidden newlines from Python are handled
+  const cleanText = (text) => text ? text.replace(/\\n/g, '\n') : '';
+
   return (
     // Clean, neutral background, centering the app perfectly
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6 font-sans">
       
-      {/* Large Centered Chat Window (You can change max-w-4xl to shrink it later) */}
+      {/* Large Centered Chat Window */}
       <div className="w-full max-w-4xl h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col relative overflow-hidden border border-gray-200">
         
         {/* Header */}
@@ -75,14 +92,13 @@ function App() {
           <div className="flex items-center gap-4">
             <ChevronLeft size={28} className="cursor-pointer hover:opacity-80" />
             
-            {/* The Logo Container - Looks in your 'public' folder for kbot-logo.png */}
+            {/* The Logo Container */}
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shrink-0">
                <img 
                  src="/kbot-logo.png" 
                  alt="KBot" 
                  className="w-full h-full object-contain"
                  onError={(e) => {
-                   // If the image isn't found, it falls back to a colored circle so it doesn't look broken
                    e.target.style.display = 'none';
                    e.target.parentElement.innerHTML = '<div class="w-6 h-6 bg-[#149486] rounded-full"></div>';
                  }}
@@ -104,7 +120,7 @@ function App() {
                 {msg.role === 'user' ? 'You' : 'KBot'}
               </span>
 
-              {/* Message Bubble - Dynamically adjusts width if graph is present */}
+              {/* Message Bubble */}
               <div className={`p-4 text-[15px] leading-relaxed shadow-sm ${
                 msg.graph_json ? 'max-w-[95%] w-full' : 'max-w-[80%]'
               } ${
@@ -112,9 +128,43 @@ function App() {
                   ? 'bg-[#e2f1f0] text-gray-800 rounded-2xl rounded-tr-sm' 
                   : 'bg-[#f4f6f8] text-gray-800 rounded-2xl rounded-tl-sm border border-gray-100'
               }`}>
-                {msg.text}
                 
-                {/* 🚀 Render INTERACTIVE Plotly Graph if it exists */}
+                {/* 🚀 Render Text */}
+                {msg.role === 'user' ? (
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{cleanText(msg.text)}</div>
+                ) : (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({node, ...props}) => <p style={{ marginBottom: '12px', whiteSpace: 'pre-wrap' }} {...props} />,
+                      ul: ({node, ...props}) => <ul style={{ listStyleType: 'disc', paddingLeft: '24px', marginBottom: '12px' }} {...props} />,
+                      ol: ({node, ...props}) => <ol style={{ listStyleType: 'decimal', paddingLeft: '24px', marginBottom: '12px' }} {...props} />,
+                      li: ({node, ...props}) => <li style={{ marginBottom: '6px' }} {...props} />,
+                      strong: ({node, ...props}) => <strong style={{ fontWeight: 'bold', color: '#111827' }} {...props} />,
+                      em: ({node, ...props}) => <em style={{ fontStyle: 'italic' }} {...props} />,
+                    }}
+                  >
+                    {cleanText(msg.text)}
+                  </ReactMarkdown>
+                )}
+
+                {/* 🚀 Render Predefined Options */}
+                {msg.options && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {msg.options.map((option, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => sendMessage(option)}
+                        disabled={isLoading}
+                        className="px-4 py-2 text-[14px] font-medium border border-[#149486] text-[#149486] bg-white rounded-full hover:bg-[#e2f1f0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* 🚀 Render INTERACTIVE Plotly Graph */}
                 {msg.graph_json && (
                   <div className="mt-4 rounded-lg border border-gray-200 overflow-hidden bg-white p-2">
                     <Plot
@@ -122,16 +172,14 @@ function App() {
                       layout={{ 
                         ...JSON.parse(msg.graph_json).layout, 
                         autosize: true,
-                        // 🌟 FIX: Give the bottom (b) and left (l) margins enough room for long text
                         margin: { t: 50, r: 20, l: 60, b: 100 }, 
                         paper_bgcolor: 'transparent',
                         plot_bgcolor: 'transparent',
-                        // 🌟 FIX: Apply a professional, clean font to match your dashboard
                         font: { family: 'Inter, sans-serif', color: '#475569' },
-                        legend: { orientation: 'h', y: -0.4, x: 0 } // Push legend down so it doesn't overlap text
+                        legend: { orientation: 'h', y: -0.4, x: 0 } 
                       }}
                       useResizeHandler={true}
-                      style={{ width: "100%", height: "450px" }} // 🌟 FIX: Increased height so graphs aren't flat
+                      style={{ width: "100%", height: "450px" }} 
                       config={{ responsive: true, displayModeBar: false }}
                     />
                   </div>
@@ -184,7 +232,7 @@ function App() {
               disabled={isLoading}
             />
             <button 
-              onClick={sendMessage}
+              onClick={() => sendMessage()}
               disabled={isLoading || !input.trim()}
               className="p-3 text-[#149486] hover:bg-teal-50 rounded-full transition-colors disabled:opacity-50"
             >

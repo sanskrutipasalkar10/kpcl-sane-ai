@@ -56,3 +56,22 @@ body { background-color: #f3f4f6; color: #1f2937; }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
 .spinner { animation: spin 1s linear infinite; }
+
+/* 🚀 NEW: Markdown Styling inside chat bubbles */
+.bubble p {
+  margin-bottom: 10px;
+}
+.bubble p:last-child {
+  margin-bottom: 0;
+}
+.bubble ul {
+  margin-left: 24px; /* Indents the bullet points */
+  margin-bottom: 10px;
+}
+.bubble li {
+  margin-bottom: 4px;
+}
+.bubble strong {
+  font-weight: 700;
+  color: inherit;
+}

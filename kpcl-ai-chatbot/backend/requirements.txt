@@ -19,3 +19,4 @@ plotly==5.20.0
 # AI & LLM Tools
 langchain==0.1.12
 langchain-community==0.0.28
+langchain-google-genai==1.0.1
